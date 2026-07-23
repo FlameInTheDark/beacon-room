@@ -1,0 +1,88 @@
+name: Attach release executable
+
+on:
+  workflow_run:
+    workflows:
+      - Verify and release
+    types:
+      - completed
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-attach:
+    name: Build and attach Windows executable
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push'
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out released commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Find release tag
+        id: release
+        shell: bash
+        run: |
+          git fetch --tags --force
+          tag="$(git tag --points-at HEAD --sort=-version:refname | head -n 1)"
+          if [ -z "$tag" ]; then
+            echo "No release tag was created for this commit."
+            echo "has_release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "has_release=true" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Go
+        if: steps.release.outputs.has_release == 'true'
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.8"
+          cache: true
+
+      - name: Set up Node.js
+        if: steps.release.outputs.has_release == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        if: steps.release.outputs.has_release == 'true'
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install NSIS
+        if: steps.release.outputs.has_release == 'true'
+        run: choco install nsis --yes --no-progress
+
+      - name: Build production executable
+        if: steps.release.outputs.has_release == 'true'
+        run: >-
+          go run github.com/wailsapp/wails/v2/cmd/wails@v2.12.0 build
+          -platform windows/amd64 -nsis -trimpath
+          -ldflags "-s -w -X main.appVersion=${{ steps.release.outputs.tag }}"
+
+      - name: Attach executable and installer to GitHub release
+        if: steps.release.outputs.has_release == 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $installer = Get-ChildItem -Path build/bin -Filter '*-installer.exe' | Select-Object -First 1
+          if (-not $installer) {
+            throw 'Wails did not produce an NSIS installer.'
+          }
+
+          gh release upload "${{ steps.release.outputs.tag }}" `
+            "build/bin/BeaconRoom.exe#BeaconRoom-${{ steps.release.outputs.tag }}-windows-amd64.exe" `
+            "$($installer.FullName)#BeaconRoom-${{ steps.release.outputs.tag }}-windows-amd64-installer.exe" `
+            --clobber
