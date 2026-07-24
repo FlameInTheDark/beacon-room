@@ -13,8 +13,9 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   hideToTray: false,
   api: { enabled: false, port: 7575 },
   theme: "dark",
-  notifications: { enabled: false, stationStateChanges: true, stationErrors: true },
-  statusRefresh: { enabled: false, intervalSeconds: 60 },
+	notifications: { enabled: false, stationStateChanges: true, stationErrors: true },
+	statusRefresh: { enabled: false, intervalSeconds: 60 },
+	stationControl: { mode: "bluetooth", donglePort: "" },
 };
 
 type PersistedLayout = {
@@ -42,11 +43,15 @@ export function normalizeAppSettings(settings: Partial<AppSettings> | undefined)
       stationStateChanges: settings?.notifications?.stationStateChanges ?? DEFAULT_APP_SETTINGS.notifications.stationStateChanges,
       stationErrors: settings?.notifications?.stationErrors ?? DEFAULT_APP_SETTINGS.notifications.stationErrors,
     },
-    statusRefresh: {
-      enabled: Boolean(settings?.statusRefresh?.enabled),
-      intervalSeconds: Number.isInteger(intervalSeconds) && intervalSeconds >= 5 && intervalSeconds <= 3600 ? intervalSeconds : DEFAULT_APP_SETTINGS.statusRefresh.intervalSeconds,
-    },
-  };
+		statusRefresh: {
+			enabled: Boolean(settings?.statusRefresh?.enabled),
+			intervalSeconds: Number.isInteger(intervalSeconds) && intervalSeconds >= 5 && intervalSeconds <= 3600 ? intervalSeconds : DEFAULT_APP_SETTINGS.statusRefresh.intervalSeconds,
+		},
+		stationControl: {
+			mode: settings?.stationControl?.mode === "dongle" ? "dongle" : "bluetooth",
+			donglePort: settings?.stationControl?.donglePort?.trim() ?? "",
+		},
+	};
 }
 
 function defaultRotation(position: Point | undefined, room: Room): number {

@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: Apache-2.0
+
+mainmenu "Beacon Room dongle"
+
+source "Kconfig.zephyr"
+
+menu "Beacon Room USB identity"
+
+config BEACON_USB_VID
+	hex "USB vendor ID"
+	default 0x2fe3
+	help
+	  The Zephyr project development VID is suitable only for a personal build.
+	  Use an assigned vendor ID before redistributing this firmware.
+
+config BEACON_USB_PID
+	hex "USB product ID"
+	default 0xb001
+
+config BEACON_USB_MANUFACTURER
+	string "USB manufacturer name"
+	default "Beacon Room"
+
+config BEACON_USB_PRODUCT
+	string "USB product name"
+	default "Beacon Room Dongle"
+
+endmenu

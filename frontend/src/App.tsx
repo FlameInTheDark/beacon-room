@@ -48,6 +48,8 @@ export default function App() {
   const [snapStep, setSnapStep] = useState(DEFAULT_SNAP_STEP);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_APP_SETTINGS);
   const [settingsSaving, setSettingsSaving] = useState(false);
+  const [serialPorts, setSerialPorts] = useState<string[]>([]);
+  const [serialPortsLoading, setSerialPortsLoading] = useState(false);
   const [appVersion, setAppVersion] = useState("dev");
   const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
   const [selectedShapeId, setSelectedShapeId] = useState<string | null>(null);
@@ -72,6 +74,18 @@ export default function App() {
     setToast({ message, kind });
     window.setTimeout(() => setToast(null), 3200);
   }, []);
+
+  const refreshSerialPorts = useCallback(async () => {
+    setSerialPortsLoading(true);
+    try {
+      setSerialPorts(await backend.getSerialPorts());
+    } catch (error) {
+      console.error(error);
+      showToast(errorMessage(error, "Could not list serial ports"), "error");
+    } finally {
+      setSerialPortsLoading(false);
+    }
+  }, [showToast]);
 
   useEffect(() => {
     const preventNativeContextMenu = (event: MouseEvent) => event.preventDefault();
@@ -104,6 +118,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (mode !== "settings") return;
+    void refreshSerialPorts();
+  }, [mode, refreshSerialPorts]);
+
+  useEffect(() => {
     if (!("runtime" in window)) return undefined;
     return EventsOn("station-power-results", (results: PowerResult[]) => {
       setStations((current) => applyPowerResults(current, results));
@@ -123,7 +142,7 @@ export default function App() {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
-      if (target?.tagName === "INPUT" || target?.tagName === "TEXTAREA") return;
+      if (target?.tagName === "INPUT" || target?.tagName === "TEXTAREA" || target?.tagName === "SELECT") return;
       if ((event.key === "Delete" || event.key === "Backspace") && stage === "room" && selectedPointId) {
         event.preventDefault();
         deleteSelectedPoint();
@@ -223,7 +242,7 @@ export default function App() {
   async function discoverStations() {
     setDiscovering(true);
     try {
-      const discovered = await withTimeout(backend.discoverBaseStations(), "Bluetooth scan timed out. Restart the app before trying again.");
+      const discovered = await withTimeout(backend.discoverBaseStations(), "Base-station scan timed out. Check the selected controller and try again.");
       setStations((current) => {
         const currentById = new Map(current.map((station) => [station.id, station]));
         const currentByBluetoothName = new Map(current.map((station) => [station.bluetoothName, station]));
@@ -248,7 +267,7 @@ export default function App() {
       showToast(`${discovered.length} nearby base stations found.`);
     } catch (error) {
       console.error(error);
-      showToast(errorMessage(error, "Bluetooth discovery failed"), "error");
+      showToast(errorMessage(error, "Base-station discovery failed"), "error");
     } finally {
       setDiscovering(false);
     }
@@ -451,7 +470,7 @@ export default function App() {
         </div>
       </header>
 
-      {mode === "settings" && <SettingsView settings={settings} version={appVersion} saving={settingsSaving} onSave={saveAppSettings} />}
+      {mode === "settings" && <SettingsView settings={settings} version={appVersion} saving={settingsSaving} serialPorts={serialPorts} serialPortsLoading={serialPortsLoading} onRefreshSerialPorts={refreshSerialPorts} onSave={saveAppSettings} />}
 
       {mode === "list" && (needsInitialSetup ? (
         <main className="initial-setup-view">

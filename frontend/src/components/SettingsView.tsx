@@ -1,11 +1,15 @@
-import { useEffect, useState } from "react";
-import { Bell, Check, Clock3, EyeOff, Monitor, Moon, Server, Sun } from "lucide-react";
-import type { AppSettings, AppTheme } from "../types";
+import { useEffect, useId, useRef, useState } from "react";
+import { Bell, Bluetooth, Check, ChevronDown, CircleHelp, Clock3, EyeOff, Monitor, Moon, RefreshCw, Server, Sun, Usb } from "lucide-react";
+import { BrowserOpenURL } from "../../wailsjs/runtime/runtime";
+import type { AppSettings, AppTheme, StationControlMode } from "../types";
 
 type Props = {
   settings: AppSettings;
   version: string;
   saving: boolean;
+  serialPorts: string[];
+  serialPortsLoading: boolean;
+  onRefreshSerialPorts: () => void;
   onSave: (settings: AppSettings) => void;
 };
 
@@ -15,7 +19,12 @@ const themeOptions: { value: AppTheme; label: string; icon: typeof Moon }[] = [
   { value: "system", label: "System", icon: Monitor },
 ];
 
-export function SettingsView({ settings, version, saving, onSave }: Props) {
+const controllerOptions: { value: StationControlMode; label: string; icon: typeof Bluetooth }[] = [
+  { value: "bluetooth", label: "Bluetooth", icon: Bluetooth },
+  { value: "dongle", label: "USB dongle", icon: Usb },
+];
+
+export function SettingsView({ settings, version, saving, serialPorts, serialPortsLoading, onRefreshSerialPorts, onSave }: Props) {
   const [draft, setDraft] = useState(settings);
 
   useEffect(() => setDraft(settings), [settings]);
@@ -24,11 +33,12 @@ export function SettingsView({ settings, version, saving, onSave }: Props) {
 
   return (
     <main className="settings-view">
-      <div className="settings-page-header">
-        <div><div className="eyebrow">Application</div><h1>Settings</h1><p>Control how Beacon Room behaves in the background and how it connects with local tools.</p></div>
-      </div>
+      <div className="settings-scroll-content">
+        <div className="settings-page-header">
+          <div><div className="eyebrow">Application</div><h1>Settings</h1><p>Control how Beacon Room behaves in the background and how it connects with local tools.</p></div>
+        </div>
 
-      <div className="settings-grid">
+        <div className="settings-grid">
         <section className="settings-section">
           <div className="settings-section-heading"><span><Monitor size={17} /></span><div><h2>Appearance</h2><p>Choose the colour mode for the application.</p></div></div>
           <div className="theme-options" role="radiogroup" aria-label="Application theme">
@@ -37,6 +47,21 @@ export function SettingsView({ settings, version, saving, onSave }: Props) {
               return <button key={option.value} className={draft.theme === option.value ? "active" : ""} role="radio" aria-checked={draft.theme === option.value} onClick={() => setDraft((current) => ({ ...current, theme: option.value }))}><Icon size={15} /> {option.label}</button>;
             })}
           </div>
+        </section>
+
+        <section className="settings-section">
+          <div className="settings-section-heading"><span><Bluetooth size={17} /></span><div><h2>Station controller</h2><p>Choose how Beacon Room communicates with SteamVR base stations.</p></div></div>
+          <div className="controller-options" role="radiogroup" aria-label="Base-station controller">
+            {controllerOptions.map((option) => {
+              const Icon = option.icon;
+              return <button key={option.value} className={draft.stationControl.mode === option.value ? "active" : ""} role="radio" aria-checked={draft.stationControl.mode === option.value} onClick={() => setDraft((current) => ({ ...current, stationControl: { ...current.stationControl, mode: option.value } }))}><Icon size={15} /> {option.label}</button>;
+            })}
+          </div>
+          {draft.stationControl.mode === "dongle" && <div className="field dongle-port-field">
+            <span>Dongle serial port</span>
+            <SerialPortPicker value={draft.stationControl.donglePort} ports={serialPorts} loading={serialPortsLoading} onChange={(donglePort) => setDraft((current) => ({ ...current, stationControl: { ...current.stationControl, donglePort } }))} onRefresh={onRefreshSerialPorts} />
+            <small>{serialPorts.length ? "Choose the port exposed by the Beacon Room dongle." : "No serial ports found. Connect the dongle, then refresh."}</small>
+          </div>}
         </section>
 
         <section className="settings-section">
@@ -58,7 +83,7 @@ export function SettingsView({ settings, version, saving, onSave }: Props) {
 
         <section className="settings-section">
           <div className="settings-section-heading"><span><Clock3 size={17} /></span><div><h2>Status refresh</h2><p>Check saved base stations while the app is open or hidden to tray.</p></div></div>
-          <ToggleRow label="Refresh station states automatically" description="The Bluetooth adapter is used sequentially to keep commands reliable." checked={draft.statusRefresh.enabled} onChange={(enabled) => setDraft((current) => ({ ...current, statusRefresh: { ...current.statusRefresh, enabled } }))} />
+          <ToggleRow label="Refresh station states automatically" description="The selected controller is used sequentially to keep commands reliable." checked={draft.statusRefresh.enabled} onChange={(enabled) => setDraft((current) => ({ ...current, statusRefresh: { ...current.statusRefresh, enabled } }))} />
           <label className="field compact-number"><span>Interval (seconds)</span><input type="number" min="5" max="3600" value={draft.statusRefresh.intervalSeconds} disabled={!draft.statusRefresh.enabled} onChange={(event) => setDraft((current) => ({ ...current, statusRefresh: { ...current.statusRefresh, intervalSeconds: Number(event.target.value) } }))} /></label>
         </section>
 
@@ -70,11 +95,108 @@ export function SettingsView({ settings, version, saving, onSave }: Props) {
             <ToggleRow label="Base-station errors" description="Notify when a command or status read cannot be confirmed." checked={draft.notifications.stationErrors} disabled={!draft.notifications.enabled} onChange={(stationErrors) => setDraft((current) => ({ ...current, notifications: { ...current.notifications, stationErrors } }))} />
           </div>
         </section>
+        </div>
       </div>
 
-      <div className="settings-page-footer"><span>Beacon Room <strong>v{version}</strong></span><button className="button button-primary" disabled={saving} onClick={() => onSave(draft)}>{saving ? <span className="spinner" /> : <Check size={16} />} {saving ? "Saving…" : "Save settings"}</button></div>
+      <footer className="settings-save-bar"><div className="settings-page-footer"><span>Beacon Room <strong>v{version}</strong></span><button className="button button-primary" disabled={saving} onClick={() => onSave(draft)}>{saving ? <span className="spinner" /> : <Check size={16} />} {saving ? "Saving…" : "Save settings"}</button></div></footer>
     </main>
   );
+}
+
+type SerialPortPickerProps = {
+  value: string;
+  ports: string[];
+  loading: boolean;
+  onChange: (port: string) => void;
+  onRefresh: () => void;
+};
+
+function SerialPortPicker({ value, ports, loading, onChange, onRefresh }: SerialPortPickerProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const pickerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const listboxRef = useRef<HTMLDivElement>(null);
+  const listboxID = useId();
+  const options = [
+    { value: "", label: "Choose a serial port" },
+    ...(value && !ports.includes(value) ? [{ value, label: `${value} (saved)` }] : []),
+    ...ports.map((port) => ({ value: port, label: port })),
+  ];
+  const selectedIndex = Math.max(0, options.findIndex((option) => option.value === value));
+
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+
+    const closeWhenOutside = (event: PointerEvent) => {
+      if (!pickerRef.current?.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", closeWhenOutside);
+    return () => document.removeEventListener("pointerdown", closeWhenOutside);
+  }, [isOpen]);
+
+  const openPicker = () => {
+    setActiveIndex(selectedIndex);
+    setIsOpen(true);
+    window.requestAnimationFrame(() => listboxRef.current?.focus());
+  };
+
+  const closePicker = () => {
+    setIsOpen(false);
+    window.requestAnimationFrame(() => triggerRef.current?.focus());
+  };
+
+  const choosePort = (port: string) => {
+    onChange(port);
+    closePicker();
+  };
+
+  const handleListboxKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveIndex((current) => Math.min(current + 1, options.length - 1));
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveIndex((current) => Math.max(current - 1, 0));
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      setActiveIndex(0);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      setActiveIndex(options.length - 1);
+    } else if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      choosePort(options[activeIndex].value);
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      closePicker();
+    }
+  };
+
+  return <div className={`serial-port-picker ${isOpen ? "is-open" : ""}`} ref={pickerRef}>
+    <div className={`serial-port-control ${value ? "has-value" : ""}`}>
+      <button ref={triggerRef} type="button" className="serial-port-trigger" aria-label="Dongle serial port" aria-haspopup="listbox" aria-controls={listboxID} aria-expanded={isOpen} onClick={() => isOpen ? closePicker() : openPicker()} onKeyDown={(event) => {
+        if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openPicker();
+        } else if (event.key === "Escape") {
+          event.preventDefault();
+          setIsOpen(false);
+        }
+      }}>
+        <span>{value || "Choose a serial port"}</span><ChevronDown size={14} aria-hidden="true" />
+      </button>
+      {isOpen ? <div ref={listboxRef} id={listboxID} className="serial-port-menu" role="listbox" tabIndex={-1} aria-activedescendant={`${listboxID}-option-${activeIndex}`} onKeyDown={handleListboxKeyDown}>
+        {options.map((option, index) => <button key={option.value || "empty"} id={`${listboxID}-option-${index}`} type="button" role="option" aria-selected={option.value === value} className={`${option.value === value ? "selected" : ""} ${index === activeIndex ? "active" : ""}`} onMouseMove={() => setActiveIndex(index)} onClick={() => choosePort(option.value)}>{option.label}</button>)}
+      </div> : null}
+    </div>
+    <button type="button" className="icon-button" onClick={() => { setIsOpen(false); onRefresh(); }} disabled={loading} title="Refresh serial ports" aria-label="Refresh serial ports"><RefreshCw size={14} className={loading ? "spin-icon" : ""} /></button>
+    <button type="button" className="icon-button" onClick={() => { setIsOpen(false); BrowserOpenURL("https://github.com/FlameInTheDark/beacon-room/blob/main/firmware/README.md"); }} title="Open dongle setup guide" aria-label="Open dongle setup guide"><CircleHelp size={14} /></button>
+  </div>;
 }
 
 function ToggleRow({ label, description, checked, disabled = false, onChange }: { label: string; description: string; checked: boolean; disabled?: boolean; onChange: (checked: boolean) => void }) {

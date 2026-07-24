@@ -36,6 +36,12 @@ type StationService interface {
 	RefreshPowerAll(context.Context, []lighthouse.StationTarget) []lighthouse.PowerResult
 }
 
+// ConfigurableStationService can replace its hardware transport without changing application operations.
+type ConfigurableStationService interface {
+	StationService
+	Configure(context.Context, lighthouse.GatewayConfig) error
+}
+
 // applicationTray is the small native tray boundary used by the Wails façade.
 type applicationTray interface {
 	Start()
@@ -64,7 +70,8 @@ type App struct {
 // NewApp creates the application and its production dependencies.
 func NewApp() *App {
 	store, err := layout.NewDefaultFileStore()
-	return NewAppWithServices(store, lighthouse.NewController(lighthouse.NewTinyGoGateway()), err)
+	stations := lighthouse.NewSwitchingController(lighthouse.ProductionGatewayFactory{}, lighthouse.GatewayConfig{Mode: lighthouse.GatewayModeBluetooth})
+	return NewAppWithServices(store, stations, err)
 }
 
 // NewAppWithServices constructs App with injected services for deterministic testing and alternate hosts.
@@ -89,13 +96,17 @@ func (a *App) startup(ctx context.Context) {
 		a.constructionErr = fmt.Errorf("base-station service is unavailable")
 		return
 	}
-	if err := a.stations.Initialize(ctx); err != nil {
-		a.constructionErr = err
-		return
-	}
 	state, err := a.store.Load(ctx)
 	if err != nil {
 		a.constructionErr = fmt.Errorf("load application settings: %w", err)
+		return
+	}
+	if err := a.configureStationService(ctx, state.Settings); err != nil {
+		a.constructionErr = err
+		return
+	}
+	if err := a.stations.Initialize(ctx); err != nil {
+		a.constructionErr = err
 		return
 	}
 	if err := a.applyRuntimeSettings(state.Settings); err != nil {
@@ -106,6 +117,27 @@ func (a *App) startup(ctx context.Context) {
 			a.constructionErr = fmt.Errorf("apply application settings: %w; save disabled API setting: %v", err, saveErr)
 		}
 	}
+}
+
+func (a *App) configureStationService(ctx context.Context, settings AppSettings) error {
+	configurable, ok := a.stations.(ConfigurableStationService)
+	if !ok {
+		return nil
+	}
+	settings = layout.NormalizeAppSettings(settings)
+	mode := lighthouse.GatewayMode(settings.StationControl.Mode)
+	if err := configurable.Configure(ctx, lighthouse.GatewayConfig{Mode: mode, DonglePort: settings.StationControl.DonglePort}); err != nil {
+		return fmt.Errorf("configure %s base-station controller: %w", mode, err)
+	}
+	return nil
+}
+
+// GetSerialPorts returns the serial devices available for the USB dongle setting.
+func (a *App) GetSerialPorts() ([]string, error) {
+	if err := a.ready(); err != nil {
+		return nil, err
+	}
+	return lighthouse.AvailableSerialPorts()
 }
 
 func (a *App) domReady(ctx context.Context) {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -45,14 +46,20 @@ func (a *App) SaveAppSettings(settings AppSettings) error {
 		return err
 	}
 	previous := state.Settings
+	if err := a.configureStationService(a.context(), settings); err != nil {
+		return err
+	}
 	if err := a.configureAPI(settings.API); err != nil {
+		if rollbackErr := a.configureStationService(a.context(), previous); rollbackErr != nil {
+			return fmt.Errorf("configure local API: %w; restore base-station controller: %v", err, rollbackErr)
+		}
 		return err
 	}
 
 	state.Settings = settings
 	if err := a.store.Save(a.context(), state); err != nil {
-		if rollbackErr := a.configureAPI(previous.API); rollbackErr != nil {
-			return fmt.Errorf("save application settings: %w; restore API configuration: %v", err, rollbackErr)
+		if rollbackErr := a.restoreRuntimeServices(previous); rollbackErr != nil {
+			return fmt.Errorf("save application settings: %w", errors.Join(err, rollbackErr))
 		}
 		return fmt.Errorf("save application settings: %w", err)
 	}
@@ -60,10 +67,22 @@ func (a *App) SaveAppSettings(settings AppSettings) error {
 	return nil
 }
 
+func (a *App) restoreRuntimeServices(settings AppSettings) error {
+	apiErr := a.configureAPI(settings.API)
+	stationErr := a.configureStationService(a.context(), settings)
+	if apiErr == nil && stationErr == nil {
+		return nil
+	}
+	return fmt.Errorf("restore API configuration: %w", errors.Join(apiErr, stationErr))
+}
+
 func (a *App) applyRuntimeSettings(settings AppSettings) error {
 	settings = layout.NormalizeAppSettings(settings)
 	a.settingsMu.Lock()
 	defer a.settingsMu.Unlock()
+	if err := a.configureStationService(a.context(), settings); err != nil {
+		return err
+	}
 	if err := a.configureAPI(settings.API); err != nil {
 		return err
 	}

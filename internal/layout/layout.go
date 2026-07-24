@@ -9,6 +9,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
@@ -26,6 +27,13 @@ const (
 	ThemeLight = "light"
 	// ThemeSystem follows the operating-system colour preference.
 	ThemeSystem = "system"
+)
+
+const (
+	// StationControlBluetooth uses the computer's Bluetooth adapter.
+	StationControlBluetooth = "bluetooth"
+	// StationControlDongle uses a Beacon Room nRF52840 USB dongle.
+	StationControlDongle = "dongle"
 )
 
 // Point is a position in the two-dimensional room coordinate system.
@@ -87,13 +95,20 @@ type StatusRefreshSettings struct {
 	IntervalSeconds int  `json:"intervalSeconds"`
 }
 
+// StationControlSettings selects the device used to communicate with base stations.
+type StationControlSettings struct {
+	Mode       string `json:"mode"`
+	DonglePort string `json:"donglePort"`
+}
+
 // AppSettings contains preferences that are independent of the room plan.
 type AppSettings struct {
-	HideToTray    bool                  `json:"hideToTray"`
-	API           APISettings           `json:"api"`
-	Theme         string                `json:"theme"`
-	Notifications NotificationSettings  `json:"notifications"`
-	StatusRefresh StatusRefreshSettings `json:"statusRefresh"`
+	HideToTray     bool                   `json:"hideToTray"`
+	API            APISettings            `json:"api"`
+	Theme          string                 `json:"theme"`
+	Notifications  NotificationSettings   `json:"notifications"`
+	StatusRefresh  StatusRefreshSettings  `json:"statusRefresh"`
+	StationControl StationControlSettings `json:"stationControl"`
 }
 
 // DefaultAppSettings returns the settings used for new and migrated layouts.
@@ -105,7 +120,8 @@ func DefaultAppSettings() AppSettings {
 			StationStateChanges: true,
 			StationErrors:       true,
 		},
-		StatusRefresh: StatusRefreshSettings{IntervalSeconds: defaultRefreshSeconds},
+		StatusRefresh:  StatusRefreshSettings{IntervalSeconds: defaultRefreshSeconds},
+		StationControl: StationControlSettings{Mode: StationControlBluetooth},
 	}
 }
 
@@ -123,6 +139,12 @@ func NormalizeAppSettings(settings AppSettings) AppSettings {
 	default:
 		settings.Theme = defaults.Theme
 	}
+	switch settings.StationControl.Mode {
+	case StationControlBluetooth, StationControlDongle:
+	default:
+		settings.StationControl.Mode = defaults.StationControl.Mode
+	}
+	settings.StationControl.DonglePort = strings.TrimSpace(settings.StationControl.DonglePort)
 	return settings
 }
 

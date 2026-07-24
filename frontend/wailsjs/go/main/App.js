@@ -14,6 +14,10 @@ export function GetApplicationVersion() {
   return window['go']['main']['App']['GetApplicationVersion']();
 }
 
+export function GetSerialPorts() {
+  return window['go']['main']['App']['GetSerialPorts']();
+}
+
 export function LoadState() {
   return window['go']['main']['App']['LoadState']();
 }

@@ -9,6 +9,8 @@ export function GetAppSettings():Promise<layout.AppSettings>;
 
 export function GetApplicationVersion():Promise<string>;
 
+export function GetSerialPorts():Promise<Array<string>>;
+
 export function LoadState():Promise<layout.State>;
 
 export function RefreshStationPowerStates(arg1:Array<layout.BaseStation>):Promise<Array<lighthouse.PowerResult>>;

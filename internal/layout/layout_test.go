@@ -52,6 +52,9 @@ func TestFileStoreLoadMigratesLegacyLayout(t *testing.T) {
 	if state.Settings.StatusRefresh.IntervalSeconds != defaultRefreshSeconds {
 		t.Errorf("refresh interval = %d, want %d", state.Settings.StatusRefresh.IntervalSeconds, defaultRefreshSeconds)
 	}
+	if state.Settings.StationControl.Mode != StationControlBluetooth {
+		t.Errorf("station control mode = %q, want %q", state.Settings.StationControl.Mode, StationControlBluetooth)
+	}
 }
 
 func TestNormalizeAppSettings(t *testing.T) {
@@ -69,6 +72,11 @@ func TestNormalizeAppSettings(t *testing.T) {
 	invalid := NormalizeAppSettings(AppSettings{Theme: "violet", API: APISettings{Port: 0}, StatusRefresh: StatusRefreshSettings{IntervalSeconds: 1}})
 	if invalid.Theme != ThemeDark || invalid.API.Port != defaultAPIPort || invalid.StatusRefresh.IntervalSeconds != defaultRefreshSeconds {
 		t.Errorf("invalid settings = %#v, want defaults", invalid)
+	}
+
+	dongle := NormalizeAppSettings(AppSettings{StationControl: StationControlSettings{Mode: StationControlDongle, DonglePort: " COM12 "}})
+	if dongle.StationControl.Mode != StationControlDongle || dongle.StationControl.DonglePort != "COM12" {
+		t.Errorf("dongle settings = %#v, want normalized dongle configuration", dongle.StationControl)
 	}
 }
 

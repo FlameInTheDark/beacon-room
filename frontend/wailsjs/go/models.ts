@@ -14,6 +14,20 @@ export namespace layout {
 	        this.port = source["port"];
 	    }
 	}
+	export class StationControlSettings {
+	    mode: string;
+	    donglePort: string;
+
+	    static createFrom(source: any = {}) {
+	        return new StationControlSettings(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.mode = source["mode"];
+	        this.donglePort = source["donglePort"];
+	    }
+	}
 	export class StatusRefreshSettings {
 	    enabled: boolean;
 	    intervalSeconds: number;
@@ -50,6 +64,7 @@ export namespace layout {
 	    theme: string;
 	    notifications: NotificationSettings;
 	    statusRefresh: StatusRefreshSettings;
+	    stationControl: StationControlSettings;
 	
 	    static createFrom(source: any = {}) {
 	        return new AppSettings(source);
@@ -62,6 +77,7 @@ export namespace layout {
 	        this.theme = source["theme"];
 	        this.notifications = this.convertValues(source["notifications"], NotificationSettings);
 	        this.statusRefresh = this.convertValues(source["statusRefresh"], StatusRefreshSettings);
+	        this.stationControl = this.convertValues(source["stationControl"], StationControlSettings);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -289,4 +305,3 @@ export namespace lighthouse {
 	}
 
 }
-

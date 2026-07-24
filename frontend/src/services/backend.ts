@@ -9,6 +9,7 @@ type NativeApp = {
   SaveRoom?: (room: Room) => Promise<void>;
   SaveLayout?: (layout: LayoutState) => Promise<void>;
   GetAppSettings?: () => Promise<AppSettings>;
+  GetSerialPorts?: () => Promise<string[]>;
   SaveAppSettings?: (settings: AppSettings) => Promise<void>;
   GetApplicationVersion?: () => Promise<string>;
   RequestClose?: () => Promise<void>;
@@ -131,6 +132,12 @@ export const backend = {
     const native = nativeApp();
     if (native?.GetAppSettings) return native.GetAppSettings();
     return normalizeAppSettings((await this.loadState())?.settings);
+  },
+
+  async getSerialPorts(): Promise<string[]> {
+    const native = nativeApp();
+    if (native?.GetSerialPorts) return native.GetSerialPorts();
+    return [];
   },
 
   async saveAppSettings(settings: AppSettings): Promise<void> {

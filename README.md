@@ -24,7 +24,11 @@ Coverage and shadows are planning aids, not a physical tracking simulation.
 2. Open **Layout**, draw and close the room boundary, then add any furniture or obstacles.
 3. Place stations, adjust their coverage direction if needed, and finish setup. The overview remains available for day-to-day control.
 
-Bluetooth must be enabled and the computer needs a Bluetooth Low Energy adapter. The app communicates directly with the stations; do not pair them through the operating system first.
+In **Bluetooth** mode, Bluetooth must be enabled and the computer needs a Bluetooth Low Energy adapter. The app communicates directly with the stations; do not pair them through the operating system first. **USB dongle** mode uses the included nRF52840 firmware instead, so it does not use the computer's Bluetooth stack.
+
+### Optional nRF52840 dongle
+
+If native Bluetooth is unreliable, a nice!nano-compatible Pro Micro nRF52840 board can run the included [Beacon Room dongle firmware](firmware/README.md). It performs the BLE work itself and connects to Beacon Room over USB serial. Flash it as a UF2 image, then choose **USB dongle** and enter its `COM` port in **Settings → Station controller**.
 
 ## Local API
 

@@ -51,16 +51,24 @@ export type NotificationSettings = {
 };
 
 export type StatusRefreshSettings = {
-  enabled: boolean;
-  intervalSeconds: number;
+	enabled: boolean;
+	intervalSeconds: number;
+};
+
+export type StationControlMode = "bluetooth" | "dongle";
+
+export type StationControlSettings = {
+	mode: StationControlMode;
+	donglePort: string;
 };
 
 export type AppSettings = {
   hideToTray: boolean;
   api: APISettings;
   theme: AppTheme;
-  notifications: NotificationSettings;
-  statusRefresh: StatusRefreshSettings;
+	notifications: NotificationSettings;
+	statusRefresh: StatusRefreshSettings;
+	stationControl: StationControlSettings;
 };
 
 export type LayoutState = {

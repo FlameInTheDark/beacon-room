@@ -68,7 +68,8 @@
 :root[data-theme="light"] .mode-switcher button.active,
 :root[data-theme="light"] .stage-switcher button.active,
 :root[data-theme="light"] .window-controls button.active,
-:root[data-theme="light"] .theme-options button.active { color: #4b2a9d; background: rgba(112, 74, 212, .13); }
+:root[data-theme="light"] .theme-options button.active,
+:root[data-theme="light"] .controller-options button.active { color: #4b2a9d; background: rgba(112, 74, 212, .13); }
 :root[data-theme="light"] .titlebar-caption,
 :root[data-theme="light"] .window-controls button,
 :root[data-theme="light"] .field > span,
@@ -100,6 +101,12 @@
 :root[data-theme="light"] .canvas-context-menu button { color: var(--text); }
 :root[data-theme="light"] .station-context-menu button:hover,
 :root[data-theme="light"] .canvas-context-menu button:hover { color: #452590; background: rgba(112, 74, 212, .12); }
+:root[data-theme="light"] .serial-port-menu { border-color: rgba(112, 74, 212, .38); background: linear-gradient(145deg, #ffffff, #f1f0f7 72%); box-shadow: 0 14px 30px rgba(37,39,53,.2), 0 0 0 3px rgba(112,74,212,.09); }
+:root[data-theme="light"] .serial-port-menu button { color: #555866; }
+:root[data-theme="light"] .serial-port-menu button:hover,
+:root[data-theme="light"] .serial-port-menu button.active { color: #402187; background: rgba(112,74,212,.13); }
+:root[data-theme="light"] .serial-port-menu button.selected { color: #402187; background: rgba(112,74,212,.2); }
+:root[data-theme="light"] .serial-port-menu button.selected.active { background: rgba(112,74,212,.27); }
 :root[data-theme="light"] .status-bar { color: var(--muted); background: var(--panel); }
 :root[data-theme="light"] .power-label.on,
 :root[data-theme="light"] .station-grid-state.on { color: #177d4d; }
@@ -769,7 +776,8 @@ h2 { margin: 0; font-size: 19px; letter-spacing: -.035em; }
   overflow: auto;
 }
 
-.settings-view { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 30px clamp(24px, 5vw, 72px) 22px; }
+.settings-view { display: flex; flex: 1 1 auto; min-height: 0; flex-direction: column; overflow: hidden; }
+.settings-scroll-content { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 30px clamp(24px, 5vw, 72px) 26px; }
 .settings-page-header { margin: 0 auto 26px; max-width: 960px; }
 .settings-page-header h1 { margin: 0; font-size: 25px; letter-spacing: -.045em; }
 .settings-page-header p { max-width: 590px; margin: 8px 0 0; color: var(--muted); font-size: 11px; line-height: 1.55; }
@@ -784,6 +792,28 @@ h2 { margin: 0; font-size: 19px; letter-spacing: -.035em; }
 .theme-options button { height: 34px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); background: var(--panel-2); font-size: 10px; font-weight: 650; cursor: pointer; }
 .theme-options button:hover { color: var(--text); border-color: rgba(139,92,246,.38); }
 .theme-options button.active { border-color: rgba(139,92,246,.52); color: #eee8ff; background: rgba(139,92,246,.16); }
+.controller-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+.controller-options button { height: 34px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); background: var(--panel-2); font-size: 10px; font-weight: 650; cursor: pointer; }
+.controller-options button:hover { color: var(--text); border-color: rgba(139,92,246,.38); }
+.controller-options button.active { border-color: rgba(139,92,246,.52); color: #eee8ff; background: rgba(139,92,246,.16); }
+  .dongle-port-field { width: min(100%, 270px); margin-top: 10px; }
+  .serial-port-picker { position: relative; display: flex; align-items: center; gap: 7px; }
+  .serial-port-control { position: relative; min-width: 0; flex: 1 1 auto; }
+  .serial-port-trigger { width: 100%; height: 33px; display: flex; position: relative; align-items: center; justify-content: space-between; gap: 8px; overflow: hidden; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; outline: 0; color: var(--text); background: linear-gradient(135deg, rgba(139,92,246,.14), rgba(255,255,255,.018)); box-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 5px 16px rgba(0,0,0,.12); font: inherit; font-size: 10px; text-align: left; cursor: pointer; transition: border-color .16s ease, box-shadow .16s ease, background .16s ease; }
+  .serial-port-trigger::before { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(139,92,246,.07), transparent 55%); content: ""; pointer-events: none; }
+  .serial-port-trigger > * { position: relative; z-index: 1; }
+  .serial-port-trigger > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .serial-port-trigger svg { flex: 0 0 auto; color: var(--purple-light); transition: transform .16s ease, color .16s ease; }
+  .serial-port-control:hover .serial-port-trigger, .serial-port-control.has-value .serial-port-trigger { border-color: rgba(139,92,246,.42); }
+  .serial-port-picker.is-open .serial-port-trigger, .serial-port-trigger:focus-visible { border-color: rgba(167,139,250,.82); background: linear-gradient(135deg, rgba(139,92,246,.23), rgba(255,255,255,.03)); box-shadow: 0 0 0 3px rgba(139,92,246,.16), inset 0 1px 0 rgba(255,255,255,.08); }
+  .serial-port-picker.is-open .serial-port-trigger svg { color: #e6ddff; transform: rotate(180deg); }
+  .serial-port-menu { width: 100%; max-height: 184px; position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; overflow: auto; padding: 4px; border: 1px solid rgba(139,92,246,.48); border-radius: 9px; background: linear-gradient(145deg, #1a1723, #111217 72%); box-shadow: 0 14px 30px rgba(0,0,0,.42), 0 0 0 3px rgba(139,92,246,.1); outline: none; }
+  .serial-port-menu button { width: 100%; min-height: 28px; display: flex; align-items: center; padding: 0 8px; border: 0; border-radius: 6px; color: var(--muted); background: transparent; font: inherit; font-size: 9.5px; font-weight: 600; text-align: left; cursor: pointer; }
+  .serial-port-menu button:hover, .serial-port-menu button.active { color: #f1edff; background: rgba(139,92,246,.2); }
+  .serial-port-menu button.selected { color: #e5dcff; background: rgba(139,92,246,.3); }
+  .serial-port-menu button.selected.active { background: rgba(139,92,246,.42); }
+  .serial-port-picker .icon-button { width: 33px; height: 33px; flex: 0 0 auto; }
+  .dongle-port-field small { margin-top: 6px; color: var(--muted-2); font-size: 8.5px; line-height: 1.35; }
 .settings-toggle-row { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 43px; padding: 8px 0; cursor: pointer; }
 .settings-toggle-row + .settings-toggle-row { border-top: 1px solid var(--border); }
 .settings-toggle-row > span { display: flex; flex-direction: column; gap: 3px; }
@@ -803,7 +833,8 @@ h2 { margin: 0; font-size: 19px; letter-spacing: -.035em; }
 .api-route-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 .api-route-list code { padding: 5px 7px; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); background: var(--panel-2); }
 .compact-number { width: 152px; margin-top: 10px; }
-.settings-page-footer { max-width: 960px; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 20px auto 0; padding-top: 15px; border-top: 1px solid var(--border); color: var(--muted-2); font-size: 10px; }
+.settings-save-bar { flex: 0 0 auto; padding: 14px clamp(24px, 5vw, 72px); border-top: 1px solid var(--border); background: var(--bg); box-shadow: 0 -12px 24px rgba(0,0,0,.1); }
+.settings-page-footer { max-width: 960px; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 0 auto; color: var(--muted-2); font-size: 10px; }
 .settings-page-footer strong { color: var(--muted); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-weight: 600; }
 
 @media (max-width: 860px) {
