@@ -75,7 +75,7 @@
 :root[data-theme="light"] .field > span,
 :root[data-theme="light"] .choice-field legend { color: var(--muted); }
 :root[data-theme="light"] .field input,
-:root[data-theme="light"] .snap-control select,
+:root[data-theme="light"] .snap-select .app-select-trigger,
 :root[data-theme="light"] .icon-choices button,
 :root[data-theme="light"] .device-banner,
 :root[data-theme="light"] .device-id { color: var(--text); background: var(--panel-2); }
@@ -101,12 +101,12 @@
 :root[data-theme="light"] .canvas-context-menu button { color: var(--text); }
 :root[data-theme="light"] .station-context-menu button:hover,
 :root[data-theme="light"] .canvas-context-menu button:hover { color: #452590; background: rgba(112, 74, 212, .12); }
-:root[data-theme="light"] .serial-port-menu { border-color: rgba(112, 74, 212, .38); background: linear-gradient(145deg, #ffffff, #f1f0f7 72%); box-shadow: 0 14px 30px rgba(37,39,53,.2), 0 0 0 3px rgba(112,74,212,.09); }
-:root[data-theme="light"] .serial-port-menu button { color: #555866; }
-:root[data-theme="light"] .serial-port-menu button:hover,
-:root[data-theme="light"] .serial-port-menu button.active { color: #402187; background: rgba(112,74,212,.13); }
-:root[data-theme="light"] .serial-port-menu button.selected { color: #402187; background: rgba(112,74,212,.2); }
-:root[data-theme="light"] .serial-port-menu button.selected.active { background: rgba(112,74,212,.27); }
+:root[data-theme="light"] .app-select-menu { border-color: rgba(112, 74, 212, .38); background: linear-gradient(145deg, #ffffff, #f1f0f7 72%); box-shadow: 0 14px 30px rgba(37,39,53,.2), 0 0 0 3px rgba(112,74,212,.09); }
+:root[data-theme="light"] .app-select-menu button { color: #555866; }
+:root[data-theme="light"] .app-select-menu button:hover,
+:root[data-theme="light"] .app-select-menu button.active { color: #402187; background: rgba(112,74,212,.13); }
+:root[data-theme="light"] .app-select-menu button.selected { color: #402187; background: rgba(112,74,212,.2); }
+:root[data-theme="light"] .app-select-menu button.selected.active { background: rgba(112,74,212,.27); }
 :root[data-theme="light"] .status-bar { color: var(--muted); background: var(--panel); }
 :root[data-theme="light"] .power-label.on,
 :root[data-theme="light"] .station-grid-state.on { color: #177d4d; }
@@ -622,10 +622,10 @@ h2 { margin: 0; font-size: 19px; letter-spacing: -.035em; }
 .bulk-power-actions .button-primary:hover:not(:disabled) { background: rgba(139,92,246,.38); }
 .overview-power-actions .button { min-height: 31px; }
 .spin-icon { animation: spin .8s linear infinite; }
-.snap-control { height: 30px; display: flex; align-items: center; gap: 5px; padding: 0 7px; border: 1px solid var(--border); border-radius: 7px; color: var(--muted); background: rgba(255,255,255,.025); font-size: 9px; }
-.snap-control select { border: 0; color: #dedee3; background: transparent; font: inherit; font-size: 10px; cursor: pointer; }
-.snap-control select:focus { outline: none; }
-.snap-control option { color: #e7e7eb; background: #15161b; }
+.snap-control { height: 30px; display: flex; align-items: center; gap: 5px; padding: 0 4px 0 7px; border: 1px solid var(--border); border-radius: 7px; color: var(--muted); background: rgba(255,255,255,.025); font-size: 9px; }
+.snap-select { width: 76px; flex: 0 0 76px; }
+.snap-select .app-select-trigger { height: 24px; gap: 5px; padding: 0 6px; border-radius: 5px; box-shadow: none; font-size: 9px; }
+.snap-select .app-select-menu { min-width: 92px; max-height: 154px; }
 .zoom-controls { padding-left: 7px; border-left: 1px solid var(--border); }
 .zoom-controls .icon-button { width: 29px; height: 29px; }
 .zoom-label {
@@ -769,6 +769,8 @@ h2 { margin: 0; font-size: 19px; letter-spacing: -.035em; }
 .window-controls button:hover { color: #fff; background: rgba(255,255,255,.08); }
 .window-controls .window-close:hover { background: #c94b55; }
 .window-controls button.active { color: #eee8ff; background: rgba(139,92,246,.16); }
+.window-controls .update-available-button { width: auto; height: 28px; display: inline-flex; align-items: center; gap: 6px; align-self: center; margin: 0 5px 0 8px; padding: 0 9px; border: 1px solid rgba(139,92,246,.52); border-radius: 7px; color: #eee8ff; background: rgba(139,92,246,.16); box-shadow: inset 0 1px rgba(255,255,255,.08); font-size: 9px; font-weight: 680; white-space: nowrap; }
+.window-controls .update-available-button:hover { color: #fff; border-color: rgba(167,139,250,.86); background: rgba(139,92,246,.28); }
 
 .initial-setup-view, .list-workspace {
   flex: 1 1 auto;
@@ -797,21 +799,21 @@ h2 { margin: 0; font-size: 19px; letter-spacing: -.035em; }
 .controller-options button:hover { color: var(--text); border-color: rgba(139,92,246,.38); }
 .controller-options button.active { border-color: rgba(139,92,246,.52); color: #eee8ff; background: rgba(139,92,246,.16); }
   .dongle-port-field { width: min(100%, 270px); margin-top: 10px; }
-  .serial-port-picker { position: relative; display: flex; align-items: center; gap: 7px; }
-  .serial-port-control { position: relative; min-width: 0; flex: 1 1 auto; }
-  .serial-port-trigger { width: 100%; height: 33px; display: flex; position: relative; align-items: center; justify-content: space-between; gap: 8px; overflow: hidden; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; outline: 0; color: var(--text); background: linear-gradient(135deg, rgba(139,92,246,.14), rgba(255,255,255,.018)); box-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 5px 16px rgba(0,0,0,.12); font: inherit; font-size: 10px; text-align: left; cursor: pointer; transition: border-color .16s ease, box-shadow .16s ease, background .16s ease; }
-  .serial-port-trigger::before { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(139,92,246,.07), transparent 55%); content: ""; pointer-events: none; }
-  .serial-port-trigger > * { position: relative; z-index: 1; }
-  .serial-port-trigger > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .serial-port-trigger svg { flex: 0 0 auto; color: var(--purple-light); transition: transform .16s ease, color .16s ease; }
-  .serial-port-control:hover .serial-port-trigger, .serial-port-control.has-value .serial-port-trigger { border-color: rgba(139,92,246,.42); }
-  .serial-port-picker.is-open .serial-port-trigger, .serial-port-trigger:focus-visible { border-color: rgba(167,139,250,.82); background: linear-gradient(135deg, rgba(139,92,246,.23), rgba(255,255,255,.03)); box-shadow: 0 0 0 3px rgba(139,92,246,.16), inset 0 1px 0 rgba(255,255,255,.08); }
-  .serial-port-picker.is-open .serial-port-trigger svg { color: #e6ddff; transform: rotate(180deg); }
-  .serial-port-menu { width: 100%; max-height: 184px; position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; overflow: auto; padding: 4px; border: 1px solid rgba(139,92,246,.48); border-radius: 9px; background: linear-gradient(145deg, #1a1723, #111217 72%); box-shadow: 0 14px 30px rgba(0,0,0,.42), 0 0 0 3px rgba(139,92,246,.1); outline: none; }
-  .serial-port-menu button { width: 100%; min-height: 28px; display: flex; align-items: center; padding: 0 8px; border: 0; border-radius: 6px; color: var(--muted); background: transparent; font: inherit; font-size: 9.5px; font-weight: 600; text-align: left; cursor: pointer; }
-  .serial-port-menu button:hover, .serial-port-menu button.active { color: #f1edff; background: rgba(139,92,246,.2); }
-  .serial-port-menu button.selected { color: #e5dcff; background: rgba(139,92,246,.3); }
-  .serial-port-menu button.selected.active { background: rgba(139,92,246,.42); }
+  .serial-port-picker { display: flex; align-items: center; gap: 7px; }
+  .app-select { position: relative; min-width: 0; flex: 1 1 auto; }
+  .app-select-trigger { width: 100%; height: 33px; display: flex; position: relative; align-items: center; justify-content: space-between; gap: 8px; overflow: hidden; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; outline: 0; color: var(--text); background: linear-gradient(135deg, rgba(139,92,246,.14), rgba(255,255,255,.018)); box-shadow: inset 0 1px 0 rgba(255,255,255,.055), 0 5px 16px rgba(0,0,0,.12); font: inherit; font-size: 10px; text-align: left; cursor: pointer; transition: border-color .16s ease, box-shadow .16s ease, background .16s ease; }
+  .app-select-trigger::before { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(139,92,246,.07), transparent 55%); content: ""; pointer-events: none; }
+  .app-select-trigger > * { position: relative; z-index: 1; }
+  .app-select-trigger > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .app-select-trigger svg { flex: 0 0 auto; color: var(--purple-light); transition: transform .16s ease, color .16s ease; }
+  .app-select:hover .app-select-trigger, .app-select.is-open .app-select-trigger { border-color: rgba(139,92,246,.42); }
+  .app-select.is-open .app-select-trigger, .app-select-trigger:focus-visible { border-color: rgba(167,139,250,.82); background: linear-gradient(135deg, rgba(139,92,246,.23), rgba(255,255,255,.03)); box-shadow: 0 0 0 3px rgba(139,92,246,.16), inset 0 1px 0 rgba(255,255,255,.08); }
+  .app-select.is-open .app-select-trigger svg { color: #e6ddff; transform: rotate(180deg); }
+  .app-select-menu { width: 100%; max-height: 184px; position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; overflow: auto; padding: 4px; border: 1px solid rgba(139,92,246,.48); border-radius: 9px; background: linear-gradient(145deg, #1a1723, #111217 72%); box-shadow: 0 14px 30px rgba(0,0,0,.42), 0 0 0 3px rgba(139,92,246,.1); outline: none; }
+  .app-select-menu button { width: 100%; min-height: 28px; display: flex; align-items: center; padding: 0 8px; border: 0; border-radius: 6px; color: var(--muted); background: transparent; font: inherit; font-size: 9.5px; font-weight: 600; text-align: left; cursor: pointer; }
+  .app-select-menu button:hover, .app-select-menu button.active { color: #f1edff; background: rgba(139,92,246,.2); }
+  .app-select-menu button.selected { color: #e5dcff; background: rgba(139,92,246,.3); }
+  .app-select-menu button.selected.active { background: rgba(139,92,246,.42); }
   .serial-port-picker .icon-button { width: 33px; height: 33px; flex: 0 0 auto; }
   .dongle-port-field small { margin-top: 6px; color: var(--muted-2); font-size: 8.5px; line-height: 1.35; }
 .settings-toggle-row { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 43px; padding: 8px 0; cursor: pointer; }

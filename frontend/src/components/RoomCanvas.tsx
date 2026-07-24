@@ -23,6 +23,7 @@ import {
   shadowVolumes,
 } from "../lib/geometry";
 import { cameraDimensions, clampCamera, frameRoomCamera, type Camera, zoomCameraAt } from "../lib/viewport";
+import { AppSelect } from "./AppSelect";
 
 type Props = {
   stage: EditorStage;
@@ -364,7 +365,7 @@ export function RoomCanvas({
         </div>
         <div className="canvas-toolbar-actions">
           {stage === "overview" && <div className="overview-power-actions"><button className="button button-ghost" onClick={onRefreshStates} disabled={poweringAll || refreshingStates || stations.length === 0}><RefreshCw size={15} className={refreshingStates ? "spin-icon" : undefined} /> {refreshingStates ? "Refreshing…" : "Refresh states"}</button><div className="bulk-power-actions"><button className="button button-primary" onClick={() => onPowerAll(true)} disabled={poweringAll || refreshingStates || stations.length === 0}><Power size={15} /> On all</button><button className="button button-ghost" onClick={() => onPowerAll(false)} disabled={poweringAll || refreshingStates || stations.length === 0}><Power size={15} /> Off all</button></div></div>}
-          {stage !== "overview" && <label className="snap-control" title="Point snapping distance"><Grid3X3 size={14} /><span>Snap</span><select value={snapStep} onChange={(event) => onSnapStepChange(Number(event.target.value))}>{SNAP_STEPS.map((step) => <option key={step} value={step}>{step} m</option>)}</select></label>}
+          {stage !== "overview" && <div className="snap-control" title="Point snapping distance"><Grid3X3 size={14} /><span>Snap</span><AppSelect className="snap-select" value={snapStep} options={SNAP_STEPS.map((step) => ({ value: step, label: `${step} m` }))} ariaLabel="Point snapping distance" onChange={onSnapStepChange} /></div>}
           <div className="canvas-metrics"><span><small>Area</small><strong>{room.closed ? `${roomArea.toFixed(2)} m²` : "—"}</strong></span><span><small>Grid</small><strong>{GRID_STEP_METERS} m</strong></span></div>
           <div className="zoom-controls"><button className="icon-button" onClick={() => zoomAt(roomCentroidPoint, camera.zoom / 1.25)} title="Zoom out" aria-label="Zoom out"><Minus size={15} /></button><button className="zoom-label" onClick={() => setCamera({ x: 0, y: 0, zoom: 1 })} title="Reset view">{Math.round(camera.zoom * 100)}%</button><button className="icon-button" onClick={() => zoomAt(roomCentroidPoint, camera.zoom * 1.25)} title="Zoom in" aria-label="Zoom in"><Plus size={15} /></button><button className="icon-button" onClick={() => setCamera({ x: 0, y: 0, zoom: 1 })} title="Reset view" aria-label="Reset view"><RotateCcw size={15} /></button></div>
         </div>

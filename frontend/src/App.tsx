@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Check, ChevronRight, Cog, Edit3, LayoutPanelTop, MapPin, Maximize2, Minus, MousePointer2, Plus, RadioTower, Ruler, Save, ScanSearch, Trash2, X } from "lucide-react";
-import type { AppSettings, BaseStation, EditorStage, InteriorShape, LayoutState, PowerResult, Room } from "./types";
+import { ArrowLeft, Check, ChevronRight, Cog, Download, Edit3, LayoutPanelTop, MapPin, Maximize2, Minus, MousePointer2, Plus, RadioTower, Ruler, Save, ScanSearch, Trash2, X } from "lucide-react";
+import type { AppSettings, BaseStation, EditorStage, InteriorShape, LayoutState, PowerResult, Room, UpdateAvailability } from "./types";
 import { DEFAULT_SNAP_STEP, normalizeAngle, normalizeSnapStep, roomCentroid } from "./lib/geometry";
 import { DEFAULT_APP_SETTINGS, EMPTY_ROOM, normalizeAppSettings, normalizeLayout } from "./lib/layout";
 import { applyPowerResults, powerResultFailed } from "./lib/power";
@@ -11,7 +11,7 @@ import { EditStationDialog } from "./components/EditStationDialog";
 import { StationGrid } from "./components/StationGrid";
 import { RenameStationDialog } from "./components/RenameStationDialog";
 import { SettingsView } from "./components/SettingsView";
-import { EventsOn, WindowMinimise, WindowToggleMaximise } from "../wailsjs/runtime/runtime";
+import { BrowserOpenURL, EventsOn, WindowMinimise, WindowToggleMaximise } from "../wailsjs/runtime/runtime";
 
 type Toast = { message: string; kind: "success" | "error" };
 type AppMode = "list" | "layout" | "settings";
@@ -51,6 +51,7 @@ export default function App() {
   const [serialPorts, setSerialPorts] = useState<string[]>([]);
   const [serialPortsLoading, setSerialPortsLoading] = useState(false);
   const [appVersion, setAppVersion] = useState("dev");
+  const [availableUpdate, setAvailableUpdate] = useState<UpdateAvailability | null>(null);
   const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
   const [selectedShapeId, setSelectedShapeId] = useState<string | null>(null);
   const [drawingShape, setDrawingShape] = useState(false);
@@ -115,6 +116,14 @@ export default function App() {
 
   useEffect(() => {
     void backend.getApplicationVersion().then(setAppVersion, () => setAppVersion("dev"));
+  }, []);
+
+  useEffect(() => {
+    void backend.getUpdateAvailability().then((update) => {
+      if (update.available) setAvailableUpdate(update);
+    });
+    if (!("runtime" in window)) return undefined;
+    return EventsOn("update-available", (update: UpdateAvailability) => setAvailableUpdate(update));
   }, []);
 
   useEffect(() => {
@@ -463,6 +472,7 @@ export default function App() {
         </nav>}
         <div className="titlebar-caption" onDoubleClick={WindowToggleMaximise}>Beacon Room</div>
         <div className="window-controls" aria-label="Window controls">
+          {availableUpdate?.available && <button className="update-available-button" onClick={() => BrowserOpenURL(availableUpdate.url)} title={`Open Beacon Room ${availableUpdate.version} release`}><Download size={14} /> New version available</button>}
           <button className={mode === "settings" ? "active" : ""} onClick={() => setMode("settings")} title="Settings" aria-label="Settings"><Cog size={16} /></button>
           <button onClick={WindowMinimise} title="Hide" aria-label="Hide"><Minus size={16} /></button>
           <button onClick={WindowToggleMaximise} title="Maximise or restore" aria-label="Maximise or restore"><Maximize2 size={14} /></button>

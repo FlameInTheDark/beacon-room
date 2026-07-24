@@ -86,4 +86,10 @@ export type PowerResult = {
   error?: string;
 };
 
+export type UpdateAvailability = {
+  available: boolean;
+  version: string;
+  url: string;
+};
+
 export type EditorStage = "room" | "stations" | "overview";

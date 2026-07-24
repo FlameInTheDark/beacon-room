@@ -1,4 +1,4 @@
-import type { AppSettings, BaseStation, LayoutState, PowerResult, Room, StationPowerState } from "../types";
+import type { AppSettings, BaseStation, LayoutState, PowerResult, Room, StationPowerState, UpdateAvailability } from "../types";
 import { DEFAULT_APP_SETTINGS, normalizeAppSettings } from "../lib/layout";
 
 const STORAGE_KEY = "beacon-room-layout-v1";
@@ -12,6 +12,7 @@ type NativeApp = {
   GetSerialPorts?: () => Promise<string[]>;
   SaveAppSettings?: (settings: AppSettings) => Promise<void>;
   GetApplicationVersion?: () => Promise<string>;
+	GetUpdateAvailability?: () => Promise<UpdateAvailability>;
   RequestClose?: () => Promise<void>;
   SetStationPower?: (station: BaseStation, poweredOn: boolean) => Promise<PowerResult>;
   SetStationsPower?: (stations: BaseStation[], poweredOn: boolean) => Promise<PowerResult[]>;
@@ -151,6 +152,12 @@ export const backend = {
     const native = nativeApp();
     if (native?.GetApplicationVersion) return native.GetApplicationVersion();
     return "dev";
+  },
+
+  async getUpdateAvailability(): Promise<UpdateAvailability> {
+    const native = nativeApp();
+    if (native?.GetUpdateAvailability) return native.GetUpdateAvailability();
+    return { available: false, version: "", url: "" };
   },
 
   async requestClose(): Promise<void> {

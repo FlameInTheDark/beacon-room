@@ -18,6 +18,10 @@ export function GetSerialPorts() {
   return window['go']['main']['App']['GetSerialPorts']();
 }
 
+export function GetUpdateAvailability() {
+  return window['go']['main']['App']['GetUpdateAvailability']();
+}
+
 export function LoadState() {
   return window['go']['main']['App']['LoadState']();
 }

@@ -13,6 +13,7 @@ import (
 	"steamvr-room-planner/internal/controlapi"
 	"steamvr-room-planner/internal/layout"
 	"steamvr-room-planner/internal/lighthouse"
+	"steamvr-room-planner/internal/updatecheck"
 )
 
 // Wails model aliases keep the public boundary stable while implementation lives in focused packages.
@@ -42,6 +43,18 @@ type ConfigurableStationService interface {
 	Configure(context.Context, lighthouse.GatewayConfig) error
 }
 
+// UpdateChecker compares the running application version with the latest published release.
+type UpdateChecker interface {
+	Check(context.Context) (updatecheck.Release, bool, error)
+}
+
+// UpdateAvailability is the release information shown by the desktop title bar.
+type UpdateAvailability struct {
+	Available bool   `json:"available"`
+	Version   string `json:"version"`
+	URL       string `json:"url"`
+}
+
 // applicationTray is the small native tray boundary used by the Wails façade.
 type applicationTray interface {
 	Start()
@@ -62,6 +75,9 @@ type App struct {
 	backgroundCancel context.CancelFunc
 	apiServer        *controlapi.Server
 	activeAPI        layout.APISettings
+	updates          UpdateChecker
+	updateMu         sync.RWMutex
+	update           UpdateAvailability
 	tray             applicationTray
 	notificationsOn  atomic.Bool
 	quitting         atomic.Bool
@@ -71,12 +87,17 @@ type App struct {
 func NewApp() *App {
 	store, err := layout.NewDefaultFileStore()
 	stations := lighthouse.NewSwitchingController(lighthouse.ProductionGatewayFactory{}, lighthouse.GatewayConfig{Mode: lighthouse.GatewayModeBluetooth})
-	return NewAppWithServices(store, stations, err)
+	updates := updatecheck.NewChecker(updatecheck.NewGitHubSource(nil), appVersion)
+	return newApp(store, stations, err, updates)
 }
 
 // NewAppWithServices constructs App with injected services for deterministic testing and alternate hosts.
 func NewAppWithServices(store layout.Store, stations StationService, constructionErr error) *App {
-	app := &App{store: store, stations: stations, constructionErr: constructionErr}
+	return newApp(store, stations, constructionErr, nil)
+}
+
+func newApp(store layout.Store, stations StationService, constructionErr error, updates UpdateChecker) *App {
+	app := &App{store: store, stations: stations, constructionErr: constructionErr, updates: updates}
 	app.apiServer = controlapi.NewServer(&localAPIController{app: app})
 	return app
 }
@@ -89,6 +110,7 @@ func (a *App) attachTray(tray applicationTray) {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.backgroundCtx, a.backgroundCancel = context.WithCancel(ctx)
+	a.startUpdateChecks()
 	if a.constructionErr != nil {
 		return
 	}
@@ -289,4 +311,11 @@ func (a *App) context() context.Context {
 // GetApplicationVersion returns the version embedded by release builds.
 func (a *App) GetApplicationVersion() string {
 	return appVersion
+}
+
+// GetUpdateAvailability returns a newer release when one was found during background checks.
+func (a *App) GetUpdateAvailability() UpdateAvailability {
+	a.updateMu.RLock()
+	defer a.updateMu.RUnlock()
+	return a.update
 }
