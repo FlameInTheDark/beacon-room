@@ -17,11 +17,11 @@ export namespace layout {
 	export class StationControlSettings {
 	    mode: string;
 	    donglePort: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new StationControlSettings(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.mode = source["mode"];
@@ -280,6 +280,7 @@ export namespace layout {
 		    return a;
 		}
 	}
+	
 
 }
 
@@ -307,16 +308,16 @@ export namespace lighthouse {
 }
 
 export namespace main {
-
+	
 	export class UpdateAvailability {
 	    available: boolean;
 	    version: string;
 	    url: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new UpdateAvailability(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.available = source["available"];
@@ -326,3 +327,4 @@ export namespace main {
 	}
 
 }
+
